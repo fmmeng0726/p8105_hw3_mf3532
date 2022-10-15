@@ -1,0 +1,16 @@
+---
+title: "P8105_HW3"
+author: "Meng Fang"
+date: '2022-10-6'
+output: github_document
+---
+
+## Package Loading
+
+```{r}
+library(p8105.datasets)
+library(tidyverse)
+library(dplyr)
+library(patchwork)
+library(ggridges)
+```
