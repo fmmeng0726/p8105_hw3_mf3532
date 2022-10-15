@@ -80,3 +80,61 @@ insta %>%
   ) %>% pivot_wider(names_from = product_name, values_from = mean_hour) %>%
   as.data.frame()%>%t()%>% knitr::kable()
 ```
+
+## Problem 2
+
+```{r}
+accel <- read_csv(file = "./accel_data.csv") %>% janitor::clean_names()
+```
+
+#### Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
+
+- Add a variable indicating whether the day is weekend or weekday.
+
+```{r}
+tidy_accel <- accel %>%
+  mutate(wke_wkd = ifelse((day == "Saturday"| day =="Sunday"), "weekend", "weekday"),
+         day = factor(day, levels = c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+         ) %>%
+  pivot_longer(4:1443, names_to = "minute", values_to = "activity_counts") %>%
+  mutate(minute = as.integer(sub("activity_","",minute))) %>%
+           arrange(week, day)
+```
+
+The tidied dataset is has `r nrow(tidy_accel)` rows and `r ncol(tidy_accel)` colomns. The following variables exist in this dataset.
+
+- week
+- day_id
+- day
+- wke_wkd (weekday vs weekend variable)
+- minute 
+- acitivity_counts
+
+### Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+
+- Add the total activity together for each day, create variable `activity_total`.
+
+```{r}
+tidy_accel %>% group_by(week, day) %>%
+  summarize(activity_total = sum(activity_counts)) %>%
+  pivot_wider(names_from = day, values_from = activity_total) %>%
+  knitr::kable()
+```
+
+We don't observe a clear pattern on the table. But we observe two 1440 count on Saturday, which means for every minute the activity count is 1. This is unusual and maybe the patient didn't record data on these two specific day.
+
+#### Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+
+```{r}
+tidy_accel %>%
+  ggplot(aes(x = minute, y = activity_counts, color = day))+
+  geom_line(alpha = 0.5)+
+  labs(
+    title = "24-Hour Activity Counts for Each Day",
+    x = "Minute",
+    y = "Activity Count"
+  ) + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+We can see a pattern that there are two activity peaks: one around 750 min and one around 1250min in a day.
